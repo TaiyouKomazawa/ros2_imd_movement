@@ -1,0 +1,97 @@
+/imd1/imd_node:
+  ros__parameters:
+    m1:
+      dir_reverse: true
+      encoder_cpr: 64
+      gear_ratio: 50.0
+      max_rps: 3.333
+      pid:
+        current:
+          kd: 0.0
+          ki: 0.4
+          kp: 0.38
+        velocity:
+          kd: 0.00001
+          ki: 0.3
+          kp: 0.39
+    m2:
+      dir_reverse: true
+      encoder_cpr: 64
+      gear_ratio: 50.0
+      max_rps: 3.333
+      pid:
+        current:
+          kd: 0.0
+          ki: 0.4
+          kp: 0.38
+        velocity:
+          kd: 0.00001
+          ki: 0.3
+          kp: 0.39
+    mcp2210_cs_pin: 1
+    mcp2210_serial_number: "0001310808"
+    publish_tf: true
+    use_sim_time: false
+
+/imd2/imd_node:
+  ros__parameters:
+    m1:
+      dir_reverse: true
+      encoder_cpr: 64
+      gear_ratio: 50.0
+      max_rps: 3.333
+      pid:
+        current:
+          kd: 0.0
+          ki: 0.4
+          kp: 0.38
+        velocity:
+          kd: 0.00001
+          ki: 0.3
+          kp: 0.39
+    m2:
+      dir_reverse: true
+      encoder_cpr: 64
+      gear_ratio: 50.0
+      max_rps: 3.333
+      pid:
+        current:
+          kd: 0.0
+          ki: 0.4
+          kp: 0.38
+        velocity:
+          kd: 0.00001
+          ki: 0.3
+          kp: 0.39
+    mcp2210_cs_pin: 0
+    mcp2210_serial_number: "0001312251"
+    publish_tf: true
+    use_sim_time: false
+
+/LF/vector_wheel:
+  ros__parameters:
+    origin_frame_name: base_link
+    use_sim_time: false
+    wheel:
+      sliding_angle: 0
+
+/LB/vector_wheel:
+  ros__parameters:
+    origin_frame_name: base_link
+    use_sim_time: false
+    wheel:
+      sliding_angle: 0
+
+/RB/vector_wheel:
+  ros__parameters:
+    origin_frame_name: base_link
+    use_sim_time: false
+    wheel:
+      sliding_angle: 0
+
+/RF/vector_wheel:
+  ros__parameters:
+    origin_frame_name: base_link
+    use_sim_time: false
+    wheel:
+      sliding_angle: 0
