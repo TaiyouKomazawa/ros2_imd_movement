@@ -104,6 +104,16 @@ def generate_launch_description():
             {'wheel.radius' : wr}]
     )
 
+    topic_merger_node = Node(
+        package='ros2_imd_movement',
+        executable='topic_synchronizer',
+        parameters=[
+            {'wheel_odom_topics':['LF/wheel/feedback','LB/wheel/feedback','RB/wheel/feedback','RF/wheel/feedback']},
+            {'calc_matrix_once': True},
+            {'sync_hz' : 100.0}
+        ]
+    )
+
     ld.add_action(cmd_vel_arg)
     ld.add_action(rotation_radius_arg)
     ld.add_action(wheel_radius_arg)
@@ -114,4 +124,6 @@ def generate_launch_description():
     ld.add_action(left_back_wheel_node)
     ld.add_action(right_back_wheel_node)
     ld.add_action(right_flont_wheel_node)
+
+    ld.add_action(topic_merger_node)
     return ld

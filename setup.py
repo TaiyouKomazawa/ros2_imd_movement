@@ -24,7 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'vector_wheel = ros2_imd_movement.vector_wheel:main'
+            'vector_wheel = ros2_imd_movement.vector_wheel:main',
+            'topic_synchronizer = ros2_imd_movement.topic_synchronizer:main',
         ],
     },
 )

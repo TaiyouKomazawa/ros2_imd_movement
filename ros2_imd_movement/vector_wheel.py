@@ -8,9 +8,7 @@ from rclpy.node import Node
 from tf2_ros.static_transform_broadcaster import StaticTransformBroadcaster
 
 from geometry_msgs.msg import TransformStamped, Twist
-from nav_msgs.msg import Odometry
-
-from ros2_imd_interfaces.msg import MotorCmd, MotorFeed
+from ros2_imd_interfaces.msg import MotorCmd, MotorFeed, WheelFeed
 
 class VectorWheel(Node):
     def __init__(self):
@@ -20,13 +18,13 @@ class VectorWheel(Node):
         self.declare_parameter('origin_frame_name', 'base_link')
         self.declare_parameter('motor_feed_topic',  'feedback')
         self.declare_parameter('motor_cmd_topic',   'command')
-        self.declare_parameter('wheel_feed_topic',  'odom')
+        self.declare_parameter('wheel_feed_topic',  'wheel/feedback')
         self.declare_parameter('wheel_cmd_topic',   'cmd_vel')
 
-        self.declare_parameter('wheel.radius', 0.025) #[m]
-        self.declare_parameter('wheel.footprint', [0.05, -0.05]) #(x, y)[m]
-        self.declare_parameter('wheel.fixed_angle', 0) #(Fixed angle of rotation axis (Z-axis rotation, X-axis origin))[rad]
-        self.declare_parameter('wheel.sliding_direction', 0) #(Angle of sliding direction (Z-axis rotation, Y-axis origin))[rad]
+        self.declare_parameter('wheel.radius',              0.025) #[m]
+        self.declare_parameter('wheel.footprint',           [0.05, -0.05]) #(x, y)[m]
+        self.declare_parameter('wheel.fixed_angle',         0) #(Fixed angle of rotation axis (Z-axis rotation, X-axis origin))[rad]
+        self.declare_parameter('wheel.sliding_direction',   0) #(Angle of sliding direction (Z-axis rotation, Y-axis origin))[rad]
 
         self.origin_frame_id = self.get_parameter('origin_frame_name').get_parameter_value().string_value
         self.motor_feed_topic = self.get_parameter('motor_feed_topic').get_parameter_value().string_value
@@ -41,9 +39,9 @@ class VectorWheel(Node):
 
         self.get_logger().info('My origin frame id : {0}'.format(self.origin_frame_id))
         self.get_logger().info('Topics are transformed by kinematics.the correspondence is as follows : ')
-        self.get_logger().info('        |Wheel topic\t|  |Frame topic')
-        self.get_logger().info('Command |{0}\t|<-|{1}'.format(self.motor_cmd_topic, self.wheel_cmd_topic))
-        self.get_logger().info('Odometry|{0}\t|->|{1}\n'.format(self.motor_feed_topic, self.wheel_feed_topic))
+        self.get_logger().info('        |Wheel topic\t|  |Frame topic\t|')
+        self.get_logger().info('Command |{0}\t|<-|{1}\t|'.format(self.motor_cmd_topic, self.wheel_cmd_topic))
+        self.get_logger().info('Odometry|{0}\t|->|{1}\t|\n'.format(self.motor_feed_topic, self.wheel_feed_topic))
         self.get_logger().info('Wheel params : ')
         self.get_logger().info(' -radius : {:f}[m]'.format(self.wheel_radius))
         flen = math.sqrt(self.wheel_footprint[0]*self.wheel_footprint[0]+self.wheel_footprint[1]*self.wheel_footprint[1])
@@ -68,7 +66,7 @@ class VectorWheel(Node):
             10)
 
         self.pub_wheel_feed = self.create_publisher(
-            Odometry,
+            WheelFeed,
             self.wheel_feed_topic,
             10)
 
@@ -83,28 +81,18 @@ class VectorWheel(Node):
             self.waitMsgCallback_)
     
     def subscribeFeedbackCallback(self, msg):
-        self.motor_frame_id = msg.header.frame_id
-        pose = self.wheel_vec_to_frame_(self.rad_to_vel_(msg.pose))
-        twist = self.wheel_vec_to_frame_(self.rad_to_vel_(msg.velocity))
+        wheel_feed = WheelFeed()
+        wheel_feed.header.stamp = self.get_clock().now().to_msg()
+        wheel_feed.header.frame_id = msg.header.frame_id
 
-        odom = Odometry()
-        odom.pose.pose.position.x = pose[0]
-        odom.pose.pose.position.y = pose[1]
-        odom.pose.pose.position.z = 0.0
-        odom.pose.pose.orientation.x = 0.0
-        odom.pose.pose.orientation.y = 0.0
-        odom.pose.pose.orientation.z = math.sin(pose[2]/2.0)
-        odom.pose.pose.orientation.w = math.cos(pose[2]/2.0)
-        odom.twist.twist.linear.x = twist[0]
-        odom.twist.twist.linear.y = twist[1]
-        odom.twist.twist.linear.z = 0.0
-        odom.twist.twist.angular.x = 0.0
-        odom.twist.twist.angular.y = 0.0
-        odom.twist.twist.angular.z = twist[2]
+        wheel_feed.mat = (self.transform_mat[0,0],self.transform_mat[0,1],self.transform_mat[0,2])
+        wheel_feed.pose = self.rad_to_vel_(msg.pose)
+        wheel_feed.velocity = self.rad_to_vel_(msg.velocity)
 
-        self.pub_wheel_feed.publish(odom)
+        self.pub_wheel_feed.publish(wheel_feed)
 
         if self.initialized_origin == False:
+            self.motor_frame_id = wheel_feed.header.frame_id
             self.broadcastOriginFrame_()
             self.get_logger().info('Now,broadcasted static frame from {0}.'.format(self.origin_frame_id))
             self.check_sub_timer.cancel()
@@ -154,21 +142,12 @@ class VectorWheel(Node):
 
         Ts = numpy.matrix([[1, tan_s]])
         Tf = numpy.matrix([[cos_f, sin_f], [-sin_f, cos_f]])
-        Tl = numpy.matrix([[-ly, 1, 0], [lx, 0, 1]])
-        self.transform_f2w = numpy.dot(numpy.dot(Ts, Tf), Tl)
-
-        inv_Ts = numpy.linalg.pinv(Ts)
-        inv_Tf = numpy.linalg.pinv(Tf)
-        inv_Tl = numpy.linalg.pinv(Tl)
-        self.transform_w2f = numpy.dot(numpy.dot(inv_Tl, inv_Tf), inv_Ts)
+        Tl = numpy.matrix([[1, 0, -ly], [0, 1, lx]])
+        self.transform_mat = numpy.dot(numpy.dot(Ts, Tf), Tl)
 
     def frame_to_wheel_vec_(self, x, y, theta):
-        V = numpy.matrix([[theta],[x],[y]])
-        return numpy.dot(self.transform_f2w, V)[0, 0]
-
-    def wheel_vec_to_frame_(self, v):
-        (theta, x, y) = numpy.array(self.transform_w2f * v)
-        return (x[0], y[0], theta[0])
+        V = numpy.matrix([[x],[y],[theta]])
+        return numpy.dot(self.transform_mat, V)[0, 0]
 
 def main(args=None):
     rclpy.init(args=args)
