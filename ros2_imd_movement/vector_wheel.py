@@ -88,6 +88,7 @@ class VectorWheel(Node):
         wheel_feed.mat = (self.transform_mat[0,0],self.transform_mat[0,1],self.transform_mat[0,2])
         wheel_feed.pose = self.rad_to_vel_(msg.pose)
         wheel_feed.velocity = self.rad_to_vel_(msg.velocity)
+        wheel_feed.velocity_error = self.rad_to_vel_(msg.velocity_error)
 
         self.pub_wheel_feed.publish(wheel_feed)
 

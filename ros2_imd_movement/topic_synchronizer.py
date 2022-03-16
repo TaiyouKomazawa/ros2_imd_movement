@@ -82,12 +82,15 @@ class TopicSynchronizer(Node):
 
             w_pose = []
             w_vel = []
+            w_vel_error = []
             for msg in msgs:
                 w_pose.append(msg.pose)
                 w_vel.append(msg.velocity)
+                w_vel_error.append(msg.velocity_error)
 
             pose = numpy.dot(self.inv_T, numpy.matrix(w_pose).T)
             vel = numpy.dot(self.inv_T, numpy.matrix(w_vel).T)
+            vele = numpy.dot(self.inv_T, numpy.matrix(w_vel_error).T)
 
             rot = pose[2, 0]
             diff = [0.0, 0.0]
@@ -104,18 +107,17 @@ class TopicSynchronizer(Node):
             odom_msg.pose.pose.orientation.z = math.sin(rot/2.0)
             odom_msg.pose.pose.orientation.w = math.cos(rot/2.0)
 
-            diff[0] = vel[0, 0] - self.last_vel[0]
-            diff[1] = vel[1, 0] - self.last_vel[1]
-            dst = self.rotate_(diff, rot)
-            self.roted_vel[0] += dst[0]
-            self.roted_vel[1] += dst[1]
-
-            odom_msg.twist.twist.linear.x = self.roted_vel[0]
-            self.last_vel[0] = vel[0, 0]
-            odom_msg.twist.twist.linear.y = self.roted_vel[1]
-            self.last_vel[1] = vel[1, 0]
+            odom_msg.twist.twist.linear.x = vel[0, 0]
+            odom_msg.twist.twist.linear.y = vel[1, 0]
             odom_msg.twist.twist.angular.z = vel[2, 0]
-
+            odom_msg.twist.covariance = [
+                vele[0,0]*vele[0,0],    0.0,                0.0, 0.0, 0.0, 0.0,
+                0.0,                    vele[1,0]*vele[1,0],0.0, 0.0, 0.0, 0.0,
+                0.0,                    0.0,                1.0, 0.0, 0.0, 0.0,
+                0.0,                    0.0,                0.0, 1.0, 0.0, 0.0,
+                0.0,                    0.0,                0.0, 0.0, 1.0, 0.0,
+                0.0,                    0.0,                0.0, 0.0, 0.0, vele[2,0]*vele[2,0],
+            ]
 
         odom_to_base = TransformStamped()
         odom_to_base.header.stamp = odom_msg.header.stamp
