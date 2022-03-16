@@ -49,8 +49,6 @@ class TopicSynchronizer(Node):
             self.mat_initialized = False
             self.last_pose = [0.0,0.0]
             self.roted_pose = [0.0,0.0]
-            self.last_vel = [0.0,0.0]
-            self.roted_vel = [0.0,0.0]
             self.ats = ApproximateTimeSynchronizer(self.subscriptions_list, 20, 1.0/self.sync_hz)
             self.ats.registerCallback(self.subscriptionCallback)
 
