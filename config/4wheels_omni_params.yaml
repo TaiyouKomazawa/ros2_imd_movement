@@ -28,8 +28,6 @@
           kd: 0.00001
           ki: 0.3
           kp: 0.39
-    mcp2210_cs_pin: 1
-    mcp2210_serial_number: "0001310808"
     publish_tf: true
     use_sim_time: false
 
@@ -63,8 +61,6 @@
           kd: 0.00001
           ki: 0.3
           kp: 0.39
-    mcp2210_cs_pin: 0
-    mcp2210_serial_number: "0001312251"
     publish_tf: true
     use_sim_time: false
 

@@ -16,6 +16,19 @@ from launch_ros.actions import PushRosNamespace
 def generate_launch_description():
     ld = LaunchDescription()
 
+    l_id_arg = DeclareLaunchArgument(
+        'l_mcp2210_id', default_value=TextSubstitution(text='0001310808')
+    )
+    l_cs_arg = DeclareLaunchArgument(
+        'l_mcp2210_cs', default_value=TextSubstitution(text='1')
+    )
+    r_id_arg = DeclareLaunchArgument(
+        'r_mcp2210_id', default_value=TextSubstitution(text='0001312251')
+    )
+    r_cs_arg = DeclareLaunchArgument(
+        'r_mcp2210_cs', default_value=TextSubstitution(text='0')
+    )
+
     cmd_vel_arg = DeclareLaunchArgument(
         'command_topic', default_value=TextSubstitution(text='/cmd_vel')
     )
@@ -40,7 +53,11 @@ def generate_launch_description():
         package='ros2_imd_driver',
         namespace='imd1',
         executable='imd_node',
-        parameters=[wheel_params],
+        parameters=[
+            wheel_params,
+            {'mcp2210_serial_number' : ['i', LaunchConfiguration('l_mcp2210_id')]},
+            {'mcp2210_cs_pin' : LaunchConfiguration('l_mcp2210_cs')},
+        ],
         output='screen',
         remappings=[
             ('m1/command', '/LF/command'),
@@ -53,7 +70,11 @@ def generate_launch_description():
         package='ros2_imd_driver',
         namespace='imd2',
         executable='imd_node',
-        parameters=[wheel_params],
+        parameters=[
+            wheel_params,
+            {'mcp2210_serial_number' : ['i', LaunchConfiguration('r_mcp2210_id')]},
+            {'mcp2210_cs_pin' : LaunchConfiguration('r_mcp2210_cs')},
+        ],
         output='screen',
         remappings=[
             ('m1/command', '/RF/command'),
@@ -114,6 +135,10 @@ def generate_launch_description():
         ]
     )
 
+    ld.add_action(l_id_arg)
+    ld.add_action(l_cs_arg)
+    ld.add_action(r_id_arg)
+    ld.add_action(r_cs_arg)
     ld.add_action(cmd_vel_arg)
     ld.add_action(rotation_radius_arg)
     ld.add_action(wheel_radius_arg)
