@@ -140,8 +140,8 @@ class TopicSynchronizer(Node):
     
     def rotate_(self, src, rot):
         dst = [0.0, 0.0]
-        dst[0] =  src[0]*math.cos(rot) + src[1]*math.sin(rot)
-        dst[1] = -src[0]*math.sin(rot) + src[1]*math.cos(rot)
+        dst[0] =  src[0]*math.cos(rot) - src[1]*math.sin(rot)
+        dst[1] =  src[0]*math.sin(rot) + src[1]*math.cos(rot)
         return dst
 
 def main(args=None):
