@@ -112,7 +112,7 @@ class VectorWheel(Node):
         origin_to_motor.child_frame_id = self.motor_frame_id
         origin_to_motor.transform.translation.x = self.wheel_footprint[0]
         origin_to_motor.transform.translation.y = self.wheel_footprint[1]
-        origin_to_motor.transform.translation.z = 0.0
+        origin_to_motor.transform.translation.z = self.wheel_radius
 
         origin_to_motor.transform.rotation.x = 0.0
         origin_to_motor.transform.rotation.y = 0.0
